@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Image Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/fabric@4.6.0/dist/fabric.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 20px;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #canvas {
+            border: 2px solid #ccc;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/submit" method="POST" enctype="multipart/form-data" class="form-horizontal">
+                        <div class="row">
+                            <div class="input-group mb-3">
+                                <label class="input-group-text" for="screenshot">Upload Image:</label>
+                                <input type="file" class="form-control" id="screenshot" name="screenshot" accept="image/*" onchange="loadImage(event)">
+                            </div>
+                            
+                            <div class="input-group mb-3">
+                                <label class="input-group-text" for="attachment">Upload Attachment:</label>
+                                <input type="file" class="form-control" id="attachment" name="attachment" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png">
+                            </div>
+                            
+                        </div>
+                        <div class="form-group">
+                            <input type="button" value="Add Text" onclick="addText()" class="btn btn-primary" title="Click to add text to the image">
+                            <input type="hidden" name="userText" id="userText">
+                            <input type="submit" value="Save" class="btn btn-primary float-end">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12 canvas-container">
+            <canvas id="canvas" class="img-fluid border rounded"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    let canvas = new fabric.Canvas('canvas');
+
+    function resizeCanvas() {
+        const canvasContainer = document.querySelector('.canvas-container');
+        const rect = canvasContainer.getBoundingClientRect();
+        canvas.setWidth(rect.width* 0.85);
+        canvas.setHeight(rect.height * 2.0); 
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function loadImage(event) {
+    let reader = new FileReader();
+    reader.onload = function(f) {
+        let data = f.target.result;
+        fabric.Image.fromURL(data, function(img) {
+            let canvasAspectRatio = canvas.width / canvas.height;
+            let imgAspectRatio = img.width / img.height;
+            let scale, imgOptions;
+
+            if (canvasAspectRatio > imgAspectRatio) {
+                // Canvas is wider than image, scale image to canvas height
+                scale = canvas.height / img.height;
+            } else {
+                // Canvas is narrower than image, scale image to canvas width
+                scale = canvas.width / img.width;
+            }
+
+            imgOptions = {
+                scaleX: scale,
+                scaleY: scale,
+                top: (canvas.height - img.height * scale) / 2,
+                left: (canvas.width - img.width * scale) / 2,
+            };
+
+            canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), imgOptions);
+        });
+    };
+    reader.readAsDataURL(event.target.files[0]);
+}
+
+
+    function addText() {
+        let text = new fabric.IText('Click and Type', {
+            border: 2,
+            left: 10,
+            top: 10,
+            fontFamily: 'arial',
+            angle: 0,
+            fill: 'white',
+            scaleX: 2,
+            scaleY: 2,
+            fontWeight: '',
+            originX: 'left',
+            hasRotatingPoint: true
+        });
+
+        canvas.add(text);
+        canvas.setActiveObject(text);
+        canvas.renderAll();
+    }
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        let texts = canvas.getObjects('i-text');
+        let combinedText = texts.map(t => t.text).join(' ');
+        document.getElementById('userText').value = combinedText;
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
+
+</body>
+</html>
