@@ -24,6 +24,14 @@ def submit():
     # Get the text data from the form
     user_text = request.form['userText']
     
+   # Handle logo upload
+    logo_path = None
+    logo = request.files.get('logo')
+    if logo:
+        logo_filename = os.path.join(app.config['UPLOAD_FOLDER'], logo.filename)
+        logo.save(logo_filename)
+        logo_path = logo_filename
+
     # Handle attachment
     attachment_path = None
     attachment = request.files.get('attachment')
@@ -35,8 +43,8 @@ def submit():
     # Connect to the database and insert the text and attachment path data
     conn = mysql.connect()
     cursor = conn.cursor()
-    query = "INSERT INTO screenshot(text, attachment) VALUES (%s, %s)"   # Update the query
-    cursor.execute(query, (user_text, attachment_path))
+    query = "INSERT INTO uploads(text, attachment_path, logo_path) VALUES (%s, %s, %s)"
+    cursor.execute(query, (user_text, attachment_path, logo_path))
     conn.commit()
 
     cursor.close()
@@ -47,4 +55,4 @@ def submit():
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
-    app.run(debug=True)
+    app.run(port=5001, debug=True)
